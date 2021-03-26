@@ -20,7 +20,7 @@
 
 - Given that all instructions are 32 bits and aligned on a 4-byte boundary, the memory should be implemented as a "table", with the instruction in each row, and the address of the "head" of each row, should be a multiple of 4.
 
-- Then we could see, the memory is **an array of 8 bits unsigned integers** in this implementation, with size $2^{16} = 65536$. Once we want to fetch data from the memory, we should start with indices (which is a multiple of 4).
+- Then we could see, the memory is **an array of 8 bits unsigned integers** in this implementation, with size 2^16 = 65536. Once we want to fetch data from the memory, we should start with indices (which is a multiple of 4).
 
 - Note that our ARM memory is *byte-addressable*, so the bytes are addressing in **big-endian** scheme.
 

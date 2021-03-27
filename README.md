@@ -24,6 +24,22 @@
 
 - Note that our ARM memory is *byte-addressable*, so the bytes are addressing in **big-endian** scheme.
 
-#### TODO: Implementation: Registers of the machine (for emulator) ####
+#### Implementation: Registers of the machine (for emulator) ####
+- Given that:
+  - an ARM system has 17 registers:
+    - 0 - 12 General purpose
+    - 13, 14 (ignored)
+    - PC register is 15
+    - CPSR register is 16
+    - The CPSR register is used to:
+      - configure the **operating mode** of the ARM processor
+      - check conditions for conditional ARM instructions
+      - should be initialised as **0**
+      - **IMPORTANT:** the top **four** bits carry the status flags. (the NZCV flags)
+  - a register is represented as a 32-bit integer
+- We need another data structure to store values in the registers (*In this case, an array of course*).
+- Idea: **You might could define a C data structure (e.g. a struct)** to represent the internal state of an ARM machine.
+- Note: the ARM instruction set **does not have a** *halt* **instuction**, i.e. we need to use a `while (true)` loop in the implementation to make the processor run forever. Also, the machine should interpret an all-zero instruction as the signal of termination.
+- Then we should print the value of each register, and contents (instructions) of any non-zero location.
 
 

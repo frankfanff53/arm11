@@ -1,0 +1,257 @@
+<!doctype html>
+<html lang="en" ng-app>
+
+  <head>
+    <title>ARM Emulator-Assembler Testing Tool</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link href="bootstrap/css/bootstrap.min.css" rel="stylesheet" media="screen"> </link>
+
+    <style type="text/css">
+      .leftbar {
+        overflow-y: auto;
+        overflow-x: hidden;
+        height: 90%;
+        width: 160px;
+      }
+
+      .rightbox {
+        margin-left: 170px;
+      }
+    </style>
+  </head>
+
+  <body ng-controller="Results">
+
+    <div class="navbar">
+      <div class="navbar-inner">
+        <div class="container">
+          <ul class="nav">
+            <li>
+              <a class="brand" href="#">ARM Lab Test</a>
+            </li>
+            <li class="divider-vertical"></li>
+            <li>
+              <p class="navbar-text">
+                Status:
+                <span class="label label-{{status_as_severity()}}">
+                  {{ status_as_label() }}
+                </span>
+              </p>
+            </li>
+            <li class="divider-vertical"></li>
+            <li>
+              <form class="navbar-form pull-left" ng-submit="run()">
+                <input type="submit" class="btn" value="Run All"></input>
+              </form>
+            </li>
+            <!-- File Cache button
+            <li class="divider-vertical"></li>
+            <li>
+              <form class="navbar-form pull-left" ng-submit="clear_file_cache()">
+                <input type="submit" class="btn" value="Clear File Cache"></input>
+              </form>
+            </li>
+            -->
+            <li class="divider-vertical"></li>
+          </ul>
+          <div class="progress" style="margin-top: 10px;">
+            <div class="bar bar-success"
+                 style="width:{{percent_tests_success()}}%;"></div>
+            <div class="bar bar-warning"
+                 style="width:{{percent_tests_partial_success()}}%;"></div>
+            <div class="bar bar-danger"
+                 style="width:{{percent_tests_failure()}}%;"></div>
+          </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- The main test/results view -->
+  <div class="row-fluid">
+    <div class="span12">
+
+      <div class="tabbable tabs-left">
+        <ul class="nav nav-tabs leftbar" data-spy="affix" data-offset-top="150px">
+          <li ng-repeat="test_case in status.test_cases" ng-class="{ active: $first }">
+            <a href="#tab{{$index}}" data-toggle="tab">
+              <span class="label label-{{test_case_as_severity(test_case)}}">{{test_case_as_label(test_case)}}</span>
+              <span class="label label-{{test_case_subpart_as_severity(test_case, 'emulator')}}">e</span>
+              <span class="label label-{{test_case_subpart_as_severity(test_case, 'assembler')}}">a</span>
+            </a>
+          </li>
+        </ul>
+
+        <div class="tab-content rightbox">
+          <div ng-repeat="test_result in status.test_results" class="tab-pane"
+               ng-click="select($index)"
+               ng-class="{ active: is_selected($index) }" id="tab{{$index}}">
+            <div class="page-header">
+              <div class="pull-right">
+                <ul class="nav nav-pills">
+                  <li class="divider-vertical"></li>
+                  <li><a href="#testcase{{$index}}">Test Case</a></li>
+                  <li><a href="#emulator{{$index}}">Emulator</a></li>
+                  <li><a href="#assembler{{$index}}">Assembler</a></li>
+                  <!-- <li><a href="#debug{{$index}}">Debug</a></li> -->
+                </ul>
+              </div>
+              <h1>{{test_case_as_label(test_result.source)}}
+                <span class="label"
+                      ng-class="{ 'label-success': test_result.emulator.passed,
+                                  'label-important': !test_result.emulator.passed
+                                }">emulator</span>
+                <span class="label"
+                      ng-class="{ 'label-success': test_result.assembler.passed,
+                                  'label-important': !test_result.assembler.passed
+                                  }">assembler</span>
+                                <button class="btn" ng-click="run_one($index)">Run</button>
+                                <!-- <button class="btn" ng-click="clear_one_file_cache(test_result.binary)">Reload</button> -->
+                              </h1>
+            </div>
+
+
+            <!-- Test case details -->
+            <div id="testcase{{$index}}">
+              <h2>Test Case Details</h2>
+              <div class="row-fluid">
+                <div class="span6">
+                  <h5>Source file</h5>
+                  <pre>{{ test_case_source_file(test_result.source) }}</pre>
+                </div>
+                <div class="span6">
+                  <h5>Equivalent binary</h5>
+                  <pre>{{ test_case_binary_file(test_result.binary) }}</pre>
+                </div>
+              </div>
+            </div>
+
+            <hr></hr>
+
+            <!-- Emulator -->
+            <div id="emulator{{$index}}">
+              <h2>Emulator Detail</h2>
+              <p><code>emulate {{ test_result.binary }}</code></p>
+
+              <div ng-switch on="test_result.emulator.result">
+                <div ng-switch-when="error">
+                  <pre> {{ test_result.emulator.message }} </pre>
+                </div>
+                <div ng-switch-when="ran">
+
+                  <div class="row-fluid">
+                    <div class="span6">
+                      <h5>stderr</h5>
+                      <pre> {{ test_result.emulator.run_results.stderr }} </pre>
+                    </div>
+                    <div class="span6">
+                      <h5>expected</h5>
+                      <pre>{{ test_result.emulator.expected.stderr }}</pre>
+                    </div>
+                  </div>
+
+                  <div class="row-fluid">
+                    <div class="span6">
+                      <h5>stdout</h5>
+                      <pre>{{ test_result.emulator.run_results.stdout }}</pre>
+                    </div>
+                    <div class="span6">
+                      <h5>expected</h5>
+                      <pre>{{ test_result.emulator.expected.stdout }}</pre>
+                    </div>
+                  </div>
+
+                  <div class="row-fluid">
+                    <div class="span6">
+                      <h5>exit code: <small><code>{{ test_result.emulator.run_results.exit_status }} - {{ exit_status_name(test_result.emulator.run_results.exit_status) }}</code></small></h5>
+                    </div>
+
+                    <div class="span6">
+                    </div>
+
+                  </div>
+
+                </div>
+              </div>
+            </div>
+
+            <hr></hr>
+
+            <!-- Assembler -->
+            <div id="assembler{{$index}}">
+              <h2>Assembler Detail</h2>
+
+              <p><code>assemble {{ test_result.source }} out</code></p>
+
+              <div ng-switch on="test_result.assembler.result">
+                <div ng-switch-when="error">
+                  <pre> {{ test_result.assembler.message }} </pre>
+                </div>
+                <div ng-switch-when="ran">
+
+                  <div class="row-fluid">
+                    <div class="span6">
+                      <h5>out</h5>
+                      <pre>{{ test_result.assembler.actual_bin }}</pre>
+                    </div>
+                    <div class="span6">
+                      <h5>expected</h5>
+                      <pre>{{ test_result.assembler.expected_bin }}</pre>
+                    </div>
+                  </div>
+
+
+                  <div class="row-fluid">
+                    <div class="span6">
+                      <h5>stdout</h5>
+                      <pre>{{ test_result.assembler.run_results.stdout }}</pre>
+                    </div>
+
+                    <div class="span6">
+                      <h5>stderr</h5>
+                      <pre>{{ test_result.assembler.run_results.stderr }}</pre>
+                    </div>
+                  </div>
+
+
+
+                  <div class="row-fluid">
+                    <div class="span6">
+                      <h5>exit code: <small><code>{{ test_result.assembler.run_results.exit_status }} - {{ exit_status_name(test_result.assembler.run_results.exit_status) }}</code></small></h5>
+                    </div>
+
+                    <div class="span6">
+                    </div>
+
+                  </div>
+
+                </div>
+              </div>
+
+            </div>
+
+            <hr></hr>
+
+            <!-- Debug -->
+            <!--
+            <div id="debug{{$index}}">
+              <h2>Debug</h2>
+              <pre>{{ test_result }}</pre>
+            </div>
+            -->
+
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="jquery-1.9.1.min.js"></script>
+  <script src="bootstrap/js/bootstrap.min.js"></script>
+  <script src="angular.min.js"></script>
+  <script src="results.js"></script>
+</body>
+
+</html>

@@ -1,5 +1,7 @@
 # ARM 11 Emulator and Assembler
 
+**This is just the placeholder, needs to update the repo once I finish my exams!**
+
 ## Part I: Emulator
 
 - We are going to run this emulator via the following command line instruction:
